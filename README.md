@@ -8,13 +8,13 @@ This was totally inspired by [David Brownlee's update-netbsd-kernel](https://git
 ## Some initial thoughts for features
 
 1. use toml or ini file to keep some config data
-  1. Things like urls for kernels
-  1. backup location
+    1. Things like urls for kernels
+    1. backup location
 1. use url to list available kernels to download
-  1. default to netbsd-GENERIC.gz
+    1. default to netbsd-GENERIC.gz
 1. Read /boot.cfg and 
-  1. alert user if the "new" name is not found
-  1. alert user if the "old" name is not found
+    1. alert user if the "new" name is not found
+    1. alert user if the "old" name is not found
 1. Compare freshly downloaded kernel version to "current" kernel version.
 1. Requires sudo permissions to update /current and /ocurrent
 
