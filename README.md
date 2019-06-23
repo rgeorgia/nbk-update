@@ -2,12 +2,12 @@
 
 requires python 3.7+
 
-### NOTE:
+### Brownlee Points:
 This was totally inspired by [David Brownlee's update-netbsd-kernel](https://github.com/abs0/update-netbsd-kernel)
 
-## Some initial thoughts for features
+## Some Initial Thoughts For Features
 
-1. use toml or ini file to keep some config data
+1. Use ini file to keep some config data
     1. Things like urls for kernels
     1. backup location
 1. use url to list available kernels to download
@@ -37,16 +37,15 @@ This uses the default **/current** for the new kernel name and **/ocurrent** for
 
 ```bash
 current:  version 8.99.49
-
 ocurrent: version 8.99.47
-
 netbsd:   version 8.1
 ```
 
 Check /boot.cfg and search for new kernel name. If it's not there, alert the user only. No need to edit the file, that's what vi is for.
 
 ```bash
-WARNING: $kernel_file_name not found in /boot.cfg. You may not be able to boot using your new kernel
+WARNING: $kernel_file_name not found in /boot.cfg. 
+You may not be able to boot using your new kernel.
 ```
 
 
