@@ -8,7 +8,7 @@ This was totally inspired by [David Brownlee's update-netbsd-kernel](https://git
 ## Some initial thoughts for features
 
 1. use toml or ini file to keep some config data
-  * Things like urls for kernels
+    * Things like urls for kernels
   * backup location
 1. use url to list available kernels to download
   * default to netbsd-GENERIC.gz
