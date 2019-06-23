@@ -37,7 +37,9 @@ This uses the default **/current** for the new kernel name and **/ocurrent** for
 
 ```bash
 current:  version 8.99.49
+
 ocurrent: version 8.99.47
+
 netbsd:   version 8.1
 ```
 
