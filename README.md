@@ -2,6 +2,8 @@
 
 requires python 3.7+
 
+### NOTE:
+This was totally inspired by [David Brownlee's update-netbsd-kernel](https://github.com/abs0/update-netbsd-kernel)
 
 ## Some initial thoughts for features
 
