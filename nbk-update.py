@@ -37,11 +37,14 @@ def read_args():
     return parser.parse_args()
 
 
-def read_boot_cfg():
-    pass
+def read_boot_cfg() -> str:
+    with open("/boot.cfg") as bcfg:
+        boot_cfg_data = bcfg.readlines()
+
+    return boot_cfg_data
 
 
-def is_in_boot_cfg() -> bool:
+def is_in_boot_cfg(data: str) -> bool:
     return False
 
 
@@ -110,6 +113,10 @@ def main():
         kern_name=default_cfg.get("defaults", "default-kernel"),
         url_tail=default_cfg.get("urls", "urltail"),
     )
+
+    if not is_in_boot_cfg(data=read_boot_cfg()):
+        print("Waring: not in /boot.cfg")
+
     return main_exit_code
 
 
