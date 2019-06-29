@@ -4,9 +4,15 @@ import sys
 import configparser
 import urllib.request
 import platform
+import hashlib
 from pathlib import Path
+from enum import Enum
 
 config_file = f"{str(Path.home())}/.nbkupdate.ini"
+
+class HashPath(Enum):
+    md5 = Path('/usr/bin/md5')
+    sha512sum = Path('/usr/pkg/emul/linux/usr/bin/sha512sum')
 
 
 def read_args():
@@ -33,7 +39,12 @@ def read_args():
         help="Download kern to temp dir and display the kernel version, "
         "but do not replace the default kernel.",
     )
-
+    parser.add_argument(
+        "--withkey",
+        type=str,
+        choices=['MD5','SHA512'],
+        help="Name of new kernel, defaults to current",
+    )
     return parser.parse_args()
 
 
@@ -64,6 +75,19 @@ def download_kernel(url: str, kern_name: str, download_target: str, url_tail: st
     )
     urllib.request.urlretrieve(
         f"{url}{arch}/{url_tail}{kern_name}", f"{download_target}/{kern_name}"
+    )
+
+def download_key(url:str, download_target: str, url_tail: str, hash_key: str = None):
+    arch = platform.machine()
+    if hash_key == 'MD5':
+        h_key = "MD5"
+    else:
+        h_key = "SHA512"
+    print(
+        f"Dowloading {url}{arch}/{url_tail}{h_key} to {download_target}/{h_key}"
+    )
+    urllib.request.urlretrieve(
+        f"{url}{arch}/{url_tail}{h_key}", f"{download_target}/{h_key}"
     )
 
 
@@ -109,7 +133,19 @@ def report_update():
     pass
 
 
-def main():
+def good_check_sum(kern_name, hash_type)-> bool:
+    readable_hash = None
+    if hash_type == 'MD5':
+        with open(f"/tmp/{kern_name}", 'rb') as kf:
+            bytes = kf.read()
+            readable_hash = hashlib.md5(bytes).hexdigest()
+    print(readable_hash)
+    print(hash_type)
+
+    return False
+
+
+def main(args):
     main_exit_code = 0
     default_cfg = read_config()
 
@@ -118,8 +154,6 @@ def main():
     kern_name = default_cfg.get("defaults", "default-kernel")
     url_tail = default_cfg.get("urls", "urltail")
 
-    args = read_args()
-
     if not Path(f"{download_target}/{kern_name}").is_file():
         download_kernel(
             download_target=download_target,
@@ -127,6 +161,15 @@ def main():
             kern_name=kern_name,
             url_tail=url_tail,
         )
+    if args.withkey:
+        download_key(download_target=download_target,
+            url=url,
+            hash_key=args.withkey,
+            url_tail=url_tail,)
+
+        if not good_check_sum(kern_name=kern_name,hash_type=args.withkey):
+            print(f"WARNING: Checksum of {kern_name} does not match what was downloaded")
+
     
     # cp /kern_name to old_kern_name
     # cp new kernel to /kern_name
@@ -134,8 +177,10 @@ def main():
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
         print("Warning: not in /boot.cfg, you may not be able to boot off your new kernel.")
 
+
     return main_exit_code
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    args = read_args()
+    sys.exit(main(args))
