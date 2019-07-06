@@ -7,7 +7,7 @@ import platform
 import hashlib
 from pathlib import Path
 from enum import Enum
-import nbkhelper
+from nbkhelper import Download
 
 config_file = f"{str(Path.home())}/.nbkupdate.ini"
 
@@ -32,15 +32,9 @@ def read_args():
     )
     parser.add_argument("--force", action="store_true", help="Force an update")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Download kern to temp dir and display the kernel version, "
-        "but do not replace the default kernel.",
-    )
-    parser.add_argument(
         "--withkey",
         type=str,
-        choices=["MD5", "SHA512"],
+        choices=["MD5", "md5","SHA512", "sha512"],
         help="Name of new kernel, defaults to current",
     )
     return parser.parse_args()
@@ -74,19 +68,15 @@ def list_kernels():
     pass
 
 
-def create_ini():
-    file_content = [
-        "[urls]",
-        "nyftp = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "nycdn = http://nycdn.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "urltail = binary/kernel/",
-        "[defaults]",
-        "default-url = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "default-src = current",
-        "default-tgt = occurent",
-        "default-download = /tmp",
-        "default-kernel = netbsd-GENERIC.gz",
-    ]
+def create_json():
+    file_content = {
+  "url_tail": "binary/kernel/",
+  "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+  "newkernel": "current",
+  "oldkernel": "occurent",
+  "default-download": "/tmp",
+  "kernel": "netbsd-GENERIC.gz"
+}
 
     with open(config_file, "w") as cf:
         for line in file_content:
@@ -116,26 +106,18 @@ def main(args):
     kern_name = default_cfg.get("defaults", "default-kernel")
     url_tail = default_cfg.get("urls", "urltail")
 
-    if not Path(f"{download_target}/{kern_name}").is_file():
-        nbkhelper.download_kernel(
-            download_target=download_target,
-            url=url,
-            kern_name=kern_name,
-            url_tail=url_tail,
-        )
-    if args.withkey:
-        nbkhelper.download_key(
-            download_target=download_target,
-            url=url,
-            hash_key=args.withkey,
-            url_tail=url_tail,
-        )
+    k_file = Download(download_target=download_target, url=url, url_tail=url_tail, kern_name=kern_name)
+    k_file.download_kernel()
 
-        if not nbkhelper.good_check_sum(kern_name=kern_name, hash_type=args.withkey):
+    if args.withkey:
+        k_file.download_key(hash_key=args.withkey)
+
+        if not k_file.good_check_sum():
             print(
                 f"WARNING: Checksum of {kern_name} does not match what was downloaded"
             )
 
+    print(k_file.hash_of_file(hash_type=args.withkey))
     # cp /kern_name to old_kern_name
     # cp new kernel to /kern_name
 
