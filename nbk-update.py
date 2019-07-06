@@ -68,7 +68,7 @@ def list_kernels():
     pass
 
 
-def create_json():
+def create_nbk_profile():
     file_content = {
   "url_tail": "binary/kernel/",
   "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
