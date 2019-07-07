@@ -74,7 +74,13 @@ def create_nbk_profile():
         json.dump(data, cf)
 
 
-def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose:bool = False, location: str = None):
+def copy_kernel(
+    src_dir: str,
+    kern_name: str,
+    new_kern_name: str,
+    verbose: bool = False,
+    location: str = None,
+):
 
     if location is None:
         location = f"/{new_kern_name}"
@@ -89,12 +95,14 @@ def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose:bool =
     except PermissionError as e:
         if os.geteuid() == 0:
             print("You are not root.")
-        print(f"Looks like you do not have permission to copy the file. You will nieed to run as root or sudo.")
+        print(
+            f"Looks like you do not have permission to copy the file. You will nieed to run as root or sudo."
+        )
         return False
     except Exception as e:
         print(f"Error copying file: {e}")
         return False
-    return  True
+    return True
 
 
 def main(args):
@@ -135,25 +143,27 @@ def main(args):
                 f"Would you like to continue? [y/N]"
             )
             if cont.upper() == "N" or cont == "":
-                sys.exit(1)
+                return 1
 
     # cp /kern_name to old_kern_name
-    src_dir = args.custom if args.custom else ''
-    copy_kernel(
+    src_dir = args.custom if args.custom else ""
+    if not copy_kernel(
         src_dir=src_dir,
         kern_name=args.newkern,
         new_kern_name=f"{args.oldkern}",
         location=args.custom,
         verbose=args.verbose,
-    )
+    ):
+        return 1
     # cp new kernel to /kern_name
-    copy_kernel(
+    if not copy_kernel(
         src_dir=cfg_data.get("default-download"),
         kern_name=cfg_data.get("kernel"),
         new_kern_name=f"{args.newkern}",
         location=args.custom,
         verbose=args.verbose,
-    )
+    ):
+        return 1
 
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
         print(
