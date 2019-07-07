@@ -1,16 +1,11 @@
 #!/usr/pkg/bin/python3.7
 import argparse
 import sys
-import configparser
-import urllib.request
-import platform
-import hashlib
+import json
 from pathlib import Path
-from enum import Enum
 from nbkhelper import Download
 
-config_file = f"{str(Path.home())}/.nbkupdate.ini"
-
+config_file = f"{str(Path.home())}/.nbkupdate.json"
 
 
 def read_args():
@@ -30,11 +25,10 @@ def read_args():
     parser.add_argument(
         "--custom", type=str, help="Set a custom target directory to install new kernel"
     )
-    parser.add_argument("--force", action="store_true", help="Force an update")
     parser.add_argument(
         "--withkey",
         type=str,
-        choices=["MD5", "md5","SHA512", "sha512"],
+        choices=["MD5", "md5", "SHA512", "sha512"],
         help="Name of new kernel, defaults to current",
     )
     return parser.parse_args()
@@ -59,65 +53,50 @@ def is_in_boot_cfg(data: list, current_name: str) -> bool:
             return True
     return False
 
-def list_urls():
-    pass
-
-
-def list_kernels():
-
-    pass
-
 
 def create_nbk_profile():
-    file_content = {
-  "url_tail": "binary/kernel/",
-  "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-  "newkernel": "current",
-  "oldkernel": "occurent",
-  "default-download": "/tmp",
-  "kernel": "netbsd-GENERIC.gz"
-}
+    data = {
+        "url_tail": "binary/kernel/",
+        "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+        "newkernel": "current",
+        "oldkernel": "occurent",
+        "default-download": "/tmp",
+        "kernel": "netbsd-GENERIC.gz",
+    }
 
     with open(config_file, "w") as cf:
-        for line in file_content:
-            cf.write(f"{line}\n")
-
-
-def read_config():
-    if not Path(config_file).is_file():
-        create_ini()
-
-    config = configparser.ConfigParser()
-    config.read(config_file)
-
-    return config
-
-
-def report_update():
-    pass
+        json.dump(data, cf)
 
 
 def main(args):
     main_exit_code = 0
-    default_cfg = read_config()
 
-    download_target = default_cfg.get("defaults", "default-download")
-    url = default_cfg.get("defaults", "default-url")
-    kern_name = default_cfg.get("defaults", "default-kernel")
-    url_tail = default_cfg.get("urls", "urltail")
+    if not Path(config_file).is_file():
+        create_nbk_profile()
 
-    k_file = Download(download_target=download_target, url=url, url_tail=url_tail, kern_name=kern_name)
+    with open(config_file, "r") as data_file:
+        cfg_data = json.load(data_file)
+
+
+    k_file = Download(
+        download_target=cfg_data.get("default-download"),
+        url=cfg_data.get("url"),
+        url_tail=cfg_data.get("url_tail"),
+        kern_name=cfg_data.get("kernel"),
+    )
     k_file.download_kernel()
 
     if args.withkey:
-        k_file.download_key(hash_key=args.withkey)
+        k_file.hash_key_type = args.withkey.upper()
+        k_file.download_key()
 
         if not k_file.good_check_sum():
-            print(
-                f"WARNING: Checksum of {kern_name} does not match what was downloaded"
-            )
+            cont = input(f"WARNING: Checksum of {cfg_data.get('kernel')} does not match what was downloaded.\n"
+                         f"Would you like to continue? [y/N]")
+            if cont.upper() == 'N' or cont == '':
+                sys.exit(1)
 
-    print(k_file.hash_of_file(hash_type=args.withkey))
+
     # cp /kern_name to old_kern_name
     # cp new kernel to /kern_name
 
@@ -126,6 +105,7 @@ def main(args):
             "Warning: not in /boot.cfg, you may not be able to boot off your new kernel."
         )
 
+    k_file.clean_up()
     return main_exit_code
 
 
