@@ -16,7 +16,14 @@ class HashType(Enum):
 
 
 class Download:
-    def __init__(self, url: str, kern_name: str, download_target: str, url_tail: str, hash_key_type: str = None):
+    def __init__(
+        self,
+        url: str,
+        kern_name: str,
+        download_target: str,
+        url_tail: str,
+        hash_key_type: str = None,
+    ):
         self.url = url
         self.kern_name = kern_name
         self.download_target = download_target
@@ -79,7 +86,7 @@ class Download:
         with open(f"{self.download_target}/{self.hash_key_type}") as cksum_file:
             for line in cksum_file:
                 if self.kern_name in line:
-                    key_value = line.split('=')[1].strip()
+                    key_value = line.split("=")[1].strip()
         if key_value == self.hash_of_file:
             return True
         else:

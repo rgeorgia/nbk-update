@@ -77,7 +77,6 @@ def main(args):
     with open(config_file, "r") as data_file:
         cfg_data = json.load(data_file)
 
-
     k_file = Download(
         download_target=cfg_data.get("default-download"),
         url=cfg_data.get("url"),
@@ -91,14 +90,16 @@ def main(args):
         k_file.download_key()
 
         if not k_file.good_check_sum():
-            cont = input(f"WARNING: Checksum of {cfg_data.get('kernel')} does not match what was downloaded.\n"
-                         f"Would you like to continue? [y/N]")
-            if cont.upper() == 'N' or cont == '':
+            cont = input(
+                f"WARNING: Checksum of {cfg_data.get('kernel')} does not match what was downloaded.\n"
+                f"Would you like to continue? [y/N]"
+            )
+            if cont.upper() == "N" or cont == "":
                 sys.exit(1)
-
 
     # cp /kern_name to old_kern_name
     # cp new kernel to /kern_name
+    print(args)
 
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
         print(
