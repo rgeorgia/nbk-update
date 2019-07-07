@@ -1,9 +1,12 @@
 #!/usr/pkg/bin/python3.7
 import argparse
+import os
 import sys
 import json
+from shutil import copy2
 from pathlib import Path
 from nbkhelper import Download
+
 
 config_file = f"{str(Path.home())}/.nbkupdate.json"
 
@@ -30,6 +33,9 @@ def read_args():
         type=str,
         choices=["MD5", "md5", "SHA512", "sha512"],
         help="Name of new kernel, defaults to current",
+    )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="increase output verbosity"
     )
     return parser.parse_args()
 
@@ -68,6 +74,29 @@ def create_nbk_profile():
         json.dump(data, cf)
 
 
+def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose:bool = False, location: str = None):
+
+    if location is None:
+        location = f"/{new_kern_name}"
+    else:
+        location = f"{location}/{new_kern_name}"
+
+    if verbose:
+        print(f"[INFO] Copying {src_dir}/{kern_name} to {location}")
+
+    try:
+        copy2(f"{src_dir}/{kern_name}", f"{location}")
+    except PermissionError as e:
+        if os.geteuid() == 0:
+            print("You are not root.")
+        print(f"Looks like you do not have permission to copy the file. You will nieed to run as root or sudo.")
+        return False
+    except Exception as e:
+        print(f"Error copying file: {e}")
+        return False
+    return  True
+
+
 def main(args):
     main_exit_code = 0
 
@@ -83,10 +112,21 @@ def main(args):
         url_tail=cfg_data.get("url_tail"),
         kern_name=cfg_data.get("kernel"),
     )
+    if args.verbose:
+        print(
+            f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...'
+        )
+
     k_file.download_kernel()
 
     if args.withkey:
         k_file.hash_key_type = args.withkey.upper()
+
+        if args.verbose:
+            print(
+                f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...'
+            )
+
         k_file.download_key()
 
         if not k_file.good_check_sum():
@@ -98,8 +138,22 @@ def main(args):
                 sys.exit(1)
 
     # cp /kern_name to old_kern_name
+    src_dir = args.custom if args.custom else ''
+    copy_kernel(
+        src_dir=src_dir,
+        kern_name=args.newkern,
+        new_kern_name=f"{args.oldkern}",
+        location=args.custom,
+        verbose=args.verbose,
+    )
     # cp new kernel to /kern_name
-    print(args)
+    copy_kernel(
+        src_dir=cfg_data.get("default-download"),
+        kern_name=cfg_data.get("kernel"),
+        new_kern_name=f"{args.newkern}",
+        location=args.custom,
+        verbose=args.verbose,
+    )
 
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
         print(
