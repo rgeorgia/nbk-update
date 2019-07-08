@@ -96,7 +96,8 @@ def copy_kernel(
         if os.geteuid() == 0:
             print("You are not root.")
         print(
-            f"Looks like you do not have permission to copy the file. You will nieed to run as root or sudo."
+            f"Looks like you do not have permission to copy the file. "
+            f"You will nieed to run as root or sudo."
         )
         return False
     except Exception as e:
@@ -169,6 +170,8 @@ def main(args):
         print(
             "Warning: not in /boot.cfg, you may not be able to boot off your new kernel."
         )
+
+    report()
 
     k_file.clean_up()
     return main_exit_code

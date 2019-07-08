@@ -98,3 +98,4 @@ class Download:
 
         if Path(f"{self.download_target}/{self.kern_name}").is_file():
             Path(f"{self.download_target}/{self.kern_name}").unlink()
+
