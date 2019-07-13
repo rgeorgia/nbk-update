@@ -35,7 +35,7 @@ This was totally inspired by [David Brownlee's update-netbsd-kernel](https://git
 * name of "old kernel": **defaults** to **ocurrent** (optional second param)
 * optional path to kernels (optional --custom)
 * withkey: pulls down hash file, either MD5 or SHA512
-* provide --configure option to setup ini or toml file
+* provide --configure option to setup .nbkupdate.json file
 
 ## Future options?
 

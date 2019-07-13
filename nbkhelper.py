@@ -1,3 +1,4 @@
+import filecmp
 import urllib.request
 import platform
 import hashlib
@@ -54,6 +55,19 @@ class Download:
 
         return self._hash_of_file
 
+
+    def is_same_version(self):
+
+        return True
+
+
+    def is_same_file(self):
+        try:
+            filecmp.cmp("/current",f"{self.download_target}/{self.kern_name}")
+        except PermissionError as pe:
+            raise pe
+
+
     def download_kernel(self):
         if Path(f"{self.download_target}/{self.kern_name}").is_file():
             Path(f"{self.download_target}/{self.kern_name}").unlink()
@@ -98,4 +112,6 @@ class Download:
 
         if Path(f"{self.download_target}/{self.kern_name}").is_file():
             Path(f"{self.download_target}/{self.kern_name}").unlink()
+
+
 
