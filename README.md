@@ -5,6 +5,17 @@ requires python 3.7+
 ### Brownlee Points:
 This was totally inspired by [David Brownlee's update-netbsd-kernel](https://github.com/abs0/update-netbsd-kernel)
 
+## Summary:
+
+* Download kernel from NetBSD-daily/HEAD/latest/ to /tmp directory (or to different target dir: future)
+* Fetch MD5 or SHA512 hash file, depending on with _withkey_ option is used
+* Verify downloaded file against hash
+* If everything checks out, check the current /current version against what was just downloaded. If they are the same, quit. (unless the -f or _force_ option is present)
+* Copy /current to /ocurrent
+* Copy downloaded file from /tmp to /current.
+* Check /boot.cfg. if current is not present, alert the user
+* Clean up /tmp
+
 ## Some Initial Thoughts For Features
 
 1. Use ini file to keep some config data
@@ -22,10 +33,16 @@ This was totally inspired by [David Brownlee's update-netbsd-kernel](https://git
 
 * new kernel name: **defaults** to **current** (optional first param)
 * name of "old kernel": **defaults** to **ocurrent** (optional second param)
-* optional path to kernels (optional --custpath)
-* force an update (optional --force)
-* provide dry-run option (optional --dryrun)
+* optional path to kernels (optional --custom)
+* withkey: pulls down hash file, either MD5 or SHA512
 * provide --configure option to setup ini or toml file
+
+## Future options?
+
+* target: name of target directory to download kernel to. **defaults** to **/tmp**
+* remote: allow user to enter different url
+* list: list remote kernel available. This will allow other architectures
+* kern: allow user to download a specific kernel from the server
 
 
 ## Usage
