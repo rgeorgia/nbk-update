@@ -14,10 +14,16 @@ config_file = f"{str(Path.home())}/.nbkupdate.json"
 def read_args():
     parser = argparse.ArgumentParser(description="Download and update NetBSD kernel.")
     parser.add_argument(
-        "--newkern", type=str, default="current", help="Name of new kernel, defaults to current"
+        "--newkern",
+        type=str,
+        default="current",
+        help="Name of new kernel, defaults to current",
     )
     parser.add_argument(
-        "--oldkern", type=str, default="ocurrent", help="Name of new kernel, defaults to current"
+        "--oldkern",
+        type=str,
+        default="ocurrent",
+        help="Name of new kernel, defaults to current",
     )
     parser.add_argument(
         "--custom", type=str, help="Set a custom target directory to install new kernel"
@@ -28,7 +34,9 @@ def read_args():
         choices=["MD5", "md5", "SHA512", "sha512"],
         help="Name of new kernel, defaults to current",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="increase output verbosity")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="increase output verbosity"
+    )
     return parser.parse_args()
 
 
@@ -66,7 +74,13 @@ def create_nbk_profile():
         json.dump(data, cf)
 
 
-def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None):
+def copy_kernel(
+    src_dir: str,
+    kern_name: str,
+    new_kern_name: str,
+    verbose: bool = False,
+    location: str = None,
+):
 
     if location is None:
         location = f"/{new_kern_name}"
@@ -108,7 +122,9 @@ def main(args):
         kern_name=cfg_data.get("kernel"),
     )
     if args.verbose:
-        print(f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...')
+        print(
+            f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...'
+        )
 
     k_file.download_kernel()
 
@@ -116,7 +132,9 @@ def main(args):
         k_file.hash_key_type = args.withkey.upper()
 
         if args.verbose:
-            print(f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...')
+            print(
+                f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...'
+            )
 
         k_file.download_key()
 
@@ -128,8 +146,8 @@ def main(args):
             if cont.upper() == "N" or cont == "":
                 return 1
 
-    # first we have to check the downloaded version against the current version. If they are different then copy
-    # otherwise if they are the same, quit.
+    # first we have to check the downloaded version against the current version.
+    # If they are different then copy otherwise if they are the same, quit
     try:
         if k_file.is_same_file():
             print(f"Looks like what was downloaded is already installed")
@@ -163,9 +181,9 @@ def main(args):
         return 1
 
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
-        print("Warning: not in /boot.cfg, you may not be able to boot off your new kernel.")
-
-
+        print(
+            "Warning: not in /boot.cfg, you may not be able to boot off your new kernel."
+        )
 
     k_file.clean_up()
     return main_exit_code
