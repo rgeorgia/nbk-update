@@ -155,10 +155,6 @@ def main(args):
     except Exception as e:
         print(f"You need root permission to verify files")
         return 1
-    finally:
-        if args.verbose:
-            print("Cleaning up")
-        k_file.clean_up()
 
     # cp /kern_name to old_kern_name
     src_dir = args.custom if args.custom else ""
