@@ -7,7 +7,6 @@ from shutil import copy2
 from pathlib import Path
 from nbkhelper import Download
 
-
 config_file = f"{str(Path.home())}/.nbkupdate.json"
 
 
@@ -74,14 +73,8 @@ def create_nbk_profile():
         json.dump(data, cf)
 
 
-def copy_kernel(
-    src_dir: str,
-    kern_name: str,
-    new_kern_name: str,
-    verbose: bool = False,
-    location: str = None,
-):
-
+def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None,):
+    # print(f"{src_dir}:{kern_name}:{new_kern_name}:{verbose}{location}")
     if location is None:
         location = f"/{new_kern_name}"
     else:
@@ -92,12 +85,12 @@ def copy_kernel(
 
     try:
         copy2(f"{src_dir}/{kern_name}", f"{location}")
-    except PermissionError as e:
+    except PermissionError:
         if os.geteuid() == 0:
             print("You are not root.")
         print(
             f"Looks like you do not have permission to copy the file. "
-            f"You will nieed to run as root or sudo."
+            f"You will need to run as root or sudo."
         )
         return False
     except Exception as e:
@@ -106,7 +99,7 @@ def copy_kernel(
     return True
 
 
-def main(args):
+def main(args: argparse.Namespace):
     main_exit_code = 0
 
     if not Path(config_file).is_file():
@@ -152,27 +145,28 @@ def main(args):
         if k_file.is_same_file():
             print(f"Looks like what was downloaded is already installed")
             return 1
+    except FileNotFoundError as e:
+        print(f"Copy /netbsd to {cfg_data.get('newkernel')}")
     except Exception as e:
-        print(f"You need root permission to verify files")
+        print(f"You need root permission to verify files\n{e}")
         return 1
-
     # cp /kern_name to old_kern_name
     src_dir = args.custom if args.custom else ""
     if not copy_kernel(
-        src_dir=src_dir,
-        kern_name=args.newkern,
-        new_kern_name=f"{args.oldkern}",
-        location=args.custom,
-        verbose=args.verbose,
+            src_dir=src_dir,
+            kern_name=args.newkern,
+            new_kern_name=f"{args.oldkern}",
+            location=args.custom,
+            verbose=args.verbose,
     ):
         return 1
     # cp new kernel to /kern_name
     if not copy_kernel(
-        src_dir=cfg_data.get("default-download"),
-        kern_name=cfg_data.get("kernel"),
-        new_kern_name=f"{args.newkern}",
-        location=args.custom,
-        verbose=args.verbose,
+            src_dir=cfg_data.get("default-download"),
+            kern_name=cfg_data.get("kernel"),
+            new_kern_name=f"{args.newkern}",
+            location=args.custom,
+            verbose=args.verbose,
     ):
         return 1
 
@@ -186,5 +180,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = read_args()
-    sys.exit(main(args))
+    all_args = read_args()
+    sys.exit(main(args=all_args))
