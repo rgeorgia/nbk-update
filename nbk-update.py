@@ -175,7 +175,7 @@ def main(args: argparse.Namespace):
             "Warning: not in /boot.cfg, you may not be able to boot off your new kernel."
         )
 
-    k_file.clean_up()
+    #k_file.clean_up()
     return main_exit_code
 
 
