@@ -2,6 +2,7 @@ import filecmp
 import urllib.request
 import platform
 import hashlib
+import gzip
 from enum import Enum
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -79,6 +80,13 @@ class Download:
             )
         except Exception as e:
             raise DownloadException(f"Error downloading {self.kern_name}: {e}")
+
+        return True
+
+    def unpack_kernel(self, kern_name):
+        # unzip self.download_target/self.kern_name
+        # rename to new name or current
+        print(f"I am in unpack with {kern_name}")
 
     def download_key(self):
         if self.hash_key_type is None:

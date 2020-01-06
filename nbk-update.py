@@ -119,7 +119,9 @@ def main(args: argparse.Namespace):
             f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...'
         )
 
-    k_file.download_kernel()
+    if k_file.download_kernel():
+        k_file.unpack_kernel(args.newkern)
+        sys.exit()
 
     if args.withkey:
         k_file.hash_key_type = args.withkey.upper()
