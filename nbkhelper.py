@@ -18,14 +18,7 @@ class HashType(Enum):
 
 
 class Download:
-    def __init__(
-        self,
-        url: str,
-        kern_name: str,
-        download_target: str,
-        url_tail: str,
-        hash_key_type: str = None,
-    ):
+    def __init__(self, url: str, kern_name: str, download_target: str, url_tail: str, hash_key_type: str = None,):
         self.url = url
         self.kern_name = kern_name
         self.download_target = download_target
@@ -86,7 +79,12 @@ class Download:
     def unpack_kernel(self, kern_name):
         # unzip self.download_target/self.kern_name
         # rename to new name or current
-        print(f"I am in unpack with {kern_name}")
+        fin = Path(f"{self.download_target}/{self.kern_name}")
+        fout = Path(f"{self.download_target}/{self.kern_name}").stem
+        print(fin)
+        print(fout)
+        #with gzip.open(f"{self.download_target}/{self.kern_name}", "rb") as f_in, open(:
+            
 
     def download_key(self):
         if self.hash_key_type is None:
