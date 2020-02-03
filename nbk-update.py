@@ -5,7 +5,7 @@ import sys
 import json
 from shutil import copy2
 from pathlib import Path
-from nbkhelper import Download
+from nbkhelper import Download, unpack_kernel, DownloadException
 
 config_file = f"{str(Path.home())}/.nbkupdate.json"
 
@@ -36,6 +36,7 @@ def read_args():
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="increase output verbosity"
     )
+    parser.add_argument("-y", "--yes", action="store_true", help="Automatically add yes to questions.")
     return parser.parse_args()
 
 
@@ -73,8 +74,7 @@ def create_nbk_profile():
         json.dump(data, cf)
 
 
-def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None,):
-    # print(f"{src_dir}:{kern_name}:{new_kern_name}:{verbose}{location}")
+def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None, ):
     if location is None:
         location = f"/{new_kern_name}"
     else:
@@ -84,17 +84,15 @@ def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool 
         print(f"[INFO] Copying {src_dir}/{kern_name} to {location}")
 
     try:
-        copy2(f"{src_dir}/{kern_name}", f"{location}")
+        copy2(f"{src_dir}/{kern_name}", f"{location}", )
     except PermissionError:
-        if os.geteuid() == 0:
-            print("You are not root.")
         print(
             f"Looks like you do not have permission to copy the file. "
-            f"You will need to run as root or sudo."
+            f"You will need to run as root or sudo.", file=sys.stderr
         )
         return False
     except Exception as e:
-        print(f"Error copying file: {e}")
+        print(f"Error copying file: {e}", file=sys.stderr)
         return False
     return True
 
@@ -108,32 +106,28 @@ def main(args: argparse.Namespace):
     with open(config_file, "r") as data_file:
         cfg_data = json.load(data_file)
 
-    k_file = Download(
-        download_target=cfg_data.get("default-download"),
-        url=cfg_data.get("url"),
-        url_tail=cfg_data.get("url_tail"),
-        kern_name=cfg_data.get("kernel"),
-    )
+    k_file = Download(download_target=cfg_data.get("default-download"), url=cfg_data.get("url"),
+                      url_tail=cfg_data.get("url_tail"), kern_name=cfg_data.get("kernel"), )
     if args.verbose:
-        print(
-            f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...'
-        )
+        print(f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...')
 
-    if k_file.download_kernel():
-        k_file.unpack_kernel(args.newkern)
-        sys.exit()
+    try:
+        k_file.download_kernel()
+    except DownloadException as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 2
+
+    # unpack_kernel(kern_name=args.newkern, download_target=k_file.download_target)
 
     if args.withkey:
         k_file.hash_key_type = args.withkey.upper()
 
         if args.verbose:
-            print(
-                f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...'
-            )
+            print(f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...')
 
         k_file.download_key()
 
-        if not k_file.good_check_sum():
+        if not k_file.good_check_sum() and not args.yes:
             cont = input(
                 f"WARNING: Checksum of {cfg_data.get('kernel')} does not match what was downloaded.\n"
                 f"Would you like to continue? [y/N]"
@@ -141,43 +135,33 @@ def main(args: argparse.Namespace):
             if cont.upper() == "N" or cont == "":
                 return 1
 
-    # first we have to check the downloaded version against the current version.
-    # If they are different then copy otherwise if they are the same, quit
+
     try:
         if k_file.is_same_file():
-            print(f"Looks like what was downloaded is already installed")
+            if args.verbose:
+                print(f"Looks like the latest version is already installed")
             return 1
     except FileNotFoundError as e:
-        print(f"Copy /netbsd to {cfg_data.get('newkernel')}")
+        pass
+
     except Exception as e:
-        print(f"You need root permission to verify files\n{e}")
+        print(f"You need root permission to verify files: {e}", file=sys.stderr)
         return 1
     # cp /kern_name to old_kern_name
     src_dir = args.custom if args.custom else ""
-    if not copy_kernel(
-            src_dir=src_dir,
-            kern_name=args.newkern,
-            new_kern_name=f"{args.oldkern}",
-            location=args.custom,
-            verbose=args.verbose,
-    ):
+    if not copy_kernel(src_dir=src_dir, kern_name=args.newkern, new_kern_name=f"{args.oldkern}",
+                       location=args.custom, verbose=args.verbose, ):
         return 1
     # cp new kernel to /kern_name
-    if not copy_kernel(
-            src_dir=cfg_data.get("default-download"),
-            kern_name=cfg_data.get("kernel"),
-            new_kern_name=f"{args.newkern}",
-            location=args.custom,
-            verbose=args.verbose,
-    ):
+    if not copy_kernel(src_dir=cfg_data.get("default-download"), kern_name=cfg_data.get("kernel"),
+                       new_kern_name=f"{args.newkern}", location=args.custom, verbose=args.verbose, ):
         return 1
 
     if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
-        print(
-            "Warning: not in /boot.cfg, you may not be able to boot off your new kernel."
-        )
+        print("Warning: not in /boot.cfg, you may not be able to boot off your new kernel.", file=sys.stderr)
+        return 1
 
-    #k_file.clean_up()
+    k_file.clean_up()
     return main_exit_code
 
 

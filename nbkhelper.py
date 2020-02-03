@@ -4,17 +4,26 @@ import platform
 import hashlib
 import gzip
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 
 class DownloadException(Exception):
     pass
 
-
+@dataclass(frozen=True)
 class HashType(Enum):
     MD5: str = "MD5"
     SHA512: str = "SHA512"
+
+
+def unpack_kernel(download_target:str, kern_name:str):
+    # unzip self.download_target/self.kern_name
+    # rename to new name or current
+    fin = Path(f"{download_target}/{kern_name}")
+    fout = Path(f"{download_target}/{kern_name}").stem
+
+    # with gzip.open(f"{self.download_target}/{self.kern_name}", "rb") as f_in, open(:
 
 
 class Download:
@@ -38,7 +47,7 @@ class Download:
     @property
     def hash_of_file(self):
 
-        if self.hash_key_type == "MD5":
+        if self.hash_key_type == HashType.MD5:
             with open(f"{self.download_target}/{self.kern_name}", "rb") as kf:
                 bytes = kf.read()
                 self._hash_of_file = hashlib.md5(bytes).hexdigest()
@@ -57,7 +66,7 @@ class Download:
 
     def is_same_file(self):
         try:
-            filecmp.cmp("/current",f"{self.download_target}/{self.kern_name}")
+            return filecmp.cmp("/current",f"{self.download_target}/{self.kern_name}")
         except PermissionError as pe:
             raise pe
 
@@ -74,17 +83,7 @@ class Download:
         except Exception as e:
             raise DownloadException(f"Error downloading {self.kern_name}: {e}")
 
-        return True
 
-    def unpack_kernel(self, kern_name):
-        # unzip self.download_target/self.kern_name
-        # rename to new name or current
-        fin = Path(f"{self.download_target}/{self.kern_name}")
-        fout = Path(f"{self.download_target}/{self.kern_name}").stem
-        print(fin)
-        print(fout)
-        #with gzip.open(f"{self.download_target}/{self.kern_name}", "rb") as f_in, open(:
-            
 
     def download_key(self):
         if self.hash_key_type is None:
