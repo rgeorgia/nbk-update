@@ -5,6 +5,7 @@ import configparser
 import urllib.request
 import platform
 from pathlib import Path
+from typing import List
 
 config_file = f"{str(Path.home())}/.nbkupdate.ini"
 
@@ -37,7 +38,7 @@ def read_args():
     return parser.parse_args()
 
 
-def read_boot_cfg() -> str:
+def read_boot_cfg() -> List[str]:
     with open("/boot.cfg") as bcfg:
         boot_cfg_data = bcfg.readlines()
 
@@ -51,7 +52,7 @@ def is_in_boot_cfg(data: str) -> bool:
 def download_kernel(url: str, kern_name: str, download_target: str, url_tail: str):
     arch = platform.machine()
     print(
-        f"Dowloading {url}{arch}/{url_tail}{kern_name} to {download_target}/{kern_name}"
+        f"Downloading {url}{arch}/{url_tail}{kern_name} to {download_target}/{kern_name}"
     )
     urllib.request.urlretrieve(
         f"{url}{arch}/{url_tail}{kern_name}", f"{download_target}/{kern_name}"
@@ -68,20 +69,20 @@ def list_kernels():
 
 
 def create_ini():
-    file_content = [
-        "[urls]",
-        "nyftp = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "nycdn = http://nycdn.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "urltail = binary/kernel/",
-        "[defaults]",
-        "default-url = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
-        "default-src = current",
-        "default-tgt = occurent",
-        "default-download = /tmp",
-        "default-kernel = netbsd-GENERIC.gz",
-    ]
-
     with open(config_file, "w") as cf:
+        file_content = [
+            "[urls]",
+            "nyftp = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+            "nycdn = http://nycdn.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+            "urltail = binary/kernel/",
+            "[defaults]",
+            "default-url = http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+            "default-src = current",
+            "default-tgt = occurent",
+            "default-download = /tmp",
+            "default-kernel = netbsd-GENERIC.gz",
+        ]
+
         for line in file_content:
             cf.write(f"{line}\n")
 
@@ -103,7 +104,6 @@ def report_update():
 
 
 def main():
-    main_exit_code = 0
     default_cfg = read_config()
     args = read_args()
 
@@ -117,7 +117,7 @@ def main():
     if not is_in_boot_cfg(data=read_boot_cfg()):
         print("Waring: not in /boot.cfg")
 
-    return main_exit_code
+    return 0
 
 
 if __name__ == "__main__":
