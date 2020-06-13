@@ -1,0 +1,8 @@
+{
+  "url_tail": "binary/kernel/",
+  "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+  "newkernel": "current",
+  "oldkernel": "occurent",
+  "default-download": "/tmp",
+  "kernel": "netbsd-GENERIC.gz"
+}

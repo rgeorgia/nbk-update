@@ -1,13 +1,17 @@
 #!/usr/pkg/bin/python3.7
 import argparse
+import os
 import sys
-import configparser
-import urllib.request
-import platform
+import json
+from shutil import copy2
 from pathlib import Path
+<<<<<<< HEAD
 from typing import List
+=======
+from nbkhelper import Download, unpack_kernel, DownloadException
+>>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
-config_file = f"{str(Path.home())}/.nbkupdate.ini"
+config_file = f"{str(Path.home())}/.nbkupdate.json"
 
 
 def read_args():
@@ -27,28 +31,46 @@ def read_args():
     parser.add_argument(
         "--custom", type=str, help="Set a custom target directory to install new kernel"
     )
-    parser.add_argument("--force", action="store_true", help="Force an update")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Download kern to temp dir and display the kernel version, "
-        "but do not replace the default kernel.",
+        "--withkey",
+        type=str,
+        choices=["MD5", "md5", "SHA512", "sha512"],
+        help="Name of new kernel, defaults to current",
     )
-
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="increase output verbosity"
+    )
+    parser.add_argument("-y", "--yes", action="store_true", help="Automatically add yes to questions.")
     return parser.parse_args()
 
 
+<<<<<<< HEAD
 def read_boot_cfg() -> List[str]:
     with open("/boot.cfg") as bcfg:
         boot_cfg_data = bcfg.readlines()
+=======
+def read_boot_cfg() -> list:
+    try:
+        with open("/boot.cfg") as bcfg:
+            boot_cfg_data = bcfg.readlines()
+    except FileNotFoundError as ffe:
+        print(
+            f"That's strange, the /boot.cfg file seems to be missing: {ffe.args[1]} -> {ffe.filename}"
+        )
+        boot_cfg_data = [ffe.errno]
+>>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
     return boot_cfg_data
 
 
-def is_in_boot_cfg(data: str) -> bool:
+def is_in_boot_cfg(data: list, current_name: str) -> bool:
+    for line in data:
+        if current_name in line:
+            return True
     return False
 
 
+<<<<<<< HEAD
 def download_kernel(url: str, kern_name: str, download_target: str, url_tail: str):
     arch = platform.machine()
     print(
@@ -86,23 +108,46 @@ def create_ini():
         for line in file_content:
             cf.write(f"{line}\n")
 
+=======
+def create_nbk_profile():
+    data = {
+        "url_tail": "binary/kernel/",
+        "url": "http://nyftp.netbsd.org/pub/NetBSD-daily/HEAD/latest/",
+        "newkernel": "current",
+        "oldkernel": "occurent",
+        "default-download": "/tmp",
+        "kernel": "netbsd-GENERIC.gz",
+    }
 
-def read_config():
-    # if .nbkern.ini is not present, create one in home directory
-    # else, read the file
-    if not Path(config_file).is_file():
-        create_ini()
-
-    config = configparser.ConfigParser()
-    config.read(config_file)
-
-    return config
+    with open(config_file, "w") as cf:
+        json.dump(data, cf)
+>>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
 
-def report_update():
-    pass
+def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None, ):
+    if location is None:
+        location = f"/{new_kern_name}"
+    else:
+        location = f"{location}/{new_kern_name}"
+
+    if verbose:
+        print(f"[INFO] Copying {src_dir}/{kern_name} to {location}")
+
+    try:
+        copy2(f"{src_dir}/{kern_name}", f"{location}", )
+    except PermissionError:
+        print(
+            f"Looks like you do not have permission to copy the file. "
+            f"You will need to run as root or sudo.", file=sys.stderr
+        )
+        return False
+    except Exception as e:
+        print(f"Error copying file: {e}", file=sys.stderr)
+        return False
+    return True
 
 
+<<<<<<< HEAD
 def main():
     default_cfg = read_config()
     args = read_args()
@@ -118,7 +163,76 @@ def main():
         print("Waring: not in /boot.cfg")
 
     return 0
+=======
+def main(args: argparse.Namespace):
+    main_exit_code = 0
+
+    if not Path(config_file).is_file():
+        create_nbk_profile()
+
+    with open(config_file, "r") as data_file:
+        cfg_data = json.load(data_file)
+
+    k_file = Download(download_target=cfg_data.get("default-download"), url=cfg_data.get("url"),
+                      url_tail=cfg_data.get("url_tail"), kern_name=cfg_data.get("kernel"), )
+    if args.verbose:
+        print(f'Downloading {cfg_data.get("kernel")} from {cfg_data.get("url")}, please wait...')
+
+    try:
+        k_file.download_kernel()
+    except DownloadException as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 2
+
+    # unpack_kernel(kern_name=args.newkern, download_target=k_file.download_target)
+
+    if args.withkey:
+        k_file.hash_key_type = args.withkey.upper()
+
+        if args.verbose:
+            print(f'Downloading {args.withkey.upper()} from {cfg_data.get("url")}, please wait...')
+
+        k_file.download_key()
+
+        if not k_file.good_check_sum() and not args.yes:
+            cont = input(
+                f"WARNING: Checksum of {cfg_data.get('kernel')} does not match what was downloaded.\n"
+                f"Would you like to continue? [y/N]"
+            )
+            if cont.upper() == "N" or cont == "":
+                return 1
+
+
+    try:
+        if k_file.is_same_file():
+            if args.verbose:
+                print(f"Looks like the latest version is already installed")
+            return 1
+    except FileNotFoundError as e:
+        pass
+
+    except Exception as e:
+        print(f"You need root permission to verify files: {e}", file=sys.stderr)
+        return 1
+    # cp /kern_name to old_kern_name
+    src_dir = args.custom if args.custom else ""
+    if not copy_kernel(src_dir=src_dir, kern_name=args.newkern, new_kern_name=f"{args.oldkern}",
+                       location=args.custom, verbose=args.verbose, ):
+        return 1
+    # cp new kernel to /kern_name
+    if not copy_kernel(src_dir=cfg_data.get("default-download"), kern_name=cfg_data.get("kernel"),
+                       new_kern_name=f"{args.newkern}", location=args.custom, verbose=args.verbose, ):
+        return 1
+
+    if not is_in_boot_cfg(data=read_boot_cfg(), current_name=args.newkern):
+        print("Warning: not in /boot.cfg, you may not be able to boot off your new kernel.", file=sys.stderr)
+        return 1
+
+    k_file.clean_up()
+    return main_exit_code
+>>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    all_args = read_args()
+    sys.exit(main(args=all_args))
