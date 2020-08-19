@@ -1,15 +1,12 @@
-#!/usr/pkg/bin/python3.7
+#!/usr/bin/env python
 import argparse
 import os
 import sys
 import json
 from shutil import copy2
 from pathlib import Path
-<<<<<<< HEAD
 from typing import List
-=======
 from nbkhelper import Download, unpack_kernel, DownloadException
->>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
 config_file = f"{str(Path.home())}/.nbkupdate.json"
 
@@ -44,11 +41,6 @@ def read_args():
     return parser.parse_args()
 
 
-<<<<<<< HEAD
-def read_boot_cfg() -> List[str]:
-    with open("/boot.cfg") as bcfg:
-        boot_cfg_data = bcfg.readlines()
-=======
 def read_boot_cfg() -> list:
     try:
         with open("/boot.cfg") as bcfg:
@@ -58,7 +50,6 @@ def read_boot_cfg() -> list:
             f"That's strange, the /boot.cfg file seems to be missing: {ffe.args[1]} -> {ffe.filename}"
         )
         boot_cfg_data = [ffe.errno]
->>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
     return boot_cfg_data
 
@@ -70,7 +61,6 @@ def is_in_boot_cfg(data: list, current_name: str) -> bool:
     return False
 
 
-<<<<<<< HEAD
 def download_kernel(url: str, kern_name: str, download_target: str, url_tail: str):
     arch = platform.machine()
     print(
@@ -108,7 +98,6 @@ def create_ini():
         for line in file_content:
             cf.write(f"{line}\n")
 
-=======
 def create_nbk_profile():
     data = {
         "url_tail": "binary/kernel/",
@@ -121,7 +110,6 @@ def create_nbk_profile():
 
     with open(config_file, "w") as cf:
         json.dump(data, cf)
->>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
 
 def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool = False, location: str = None, ):
@@ -147,23 +135,6 @@ def copy_kernel(src_dir: str, kern_name: str, new_kern_name: str, verbose: bool 
     return True
 
 
-<<<<<<< HEAD
-def main():
-    default_cfg = read_config()
-    args = read_args()
-
-    download_kernel(
-        download_target=default_cfg.get("defaults", "default-download"),
-        url=default_cfg.get("defaults", "default-url"),
-        kern_name=default_cfg.get("defaults", "default-kernel"),
-        url_tail=default_cfg.get("urls", "urltail"),
-    )
-
-    if not is_in_boot_cfg(data=read_boot_cfg()):
-        print("Waring: not in /boot.cfg")
-
-    return 0
-=======
 def main(args: argparse.Namespace):
     main_exit_code = 0
 
@@ -230,7 +201,6 @@ def main(args: argparse.Namespace):
 
     k_file.clean_up()
     return main_exit_code
->>>>>>> 4e14b21d95f1260cd5a84ddaa47abf44c2213b9e
 
 
 if __name__ == "__main__":
