@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env /usr/pkg/bin/python3.8
 import argparse
 import os
 import sys
