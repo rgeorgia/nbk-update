@@ -23,8 +23,6 @@ def unpack_kernel(download_target:str, kern_name:str):
     fin = Path(f"{download_target}/{kern_name}")
     fout = Path(f"{download_target}/{kern_name}").stem
 
-    # with gzip.open(f"{self.download_target}/{self.kern_name}", "rb") as f_in, open(:
-
 
 class Download:
     def __init__(self, url: str, kern_name: str, download_target: str, url_tail: str, hash_key_type: str = None,):
@@ -117,6 +115,5 @@ class Download:
 
         if Path(f"{self.download_target}/{self.kern_name}").is_file():
             Path(f"{self.download_target}/{self.kern_name}").unlink()
-
 
 

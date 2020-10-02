@@ -1,12 +1,14 @@
 #!/usr/bin/env /usr/pkg/bin/python3.8
 import argparse
-import os
+
 import sys
 import json
+import platform
+import urllib
 from shutil import copy2
 from pathlib import Path
-from typing import List
-from nbkhelper import Download, unpack_kernel, DownloadException
+
+from nbkhelper import Download, DownloadException
 
 config_file = f"{str(Path.home())}/.nbkupdate.json"
 
@@ -76,7 +78,6 @@ def list_urls():
 
 
 def list_kernels():
-
     pass
 
 
@@ -97,6 +98,7 @@ def create_ini():
 
         for line in file_content:
             cf.write(f"{line}\n")
+
 
 def create_nbk_profile():
     data = {
@@ -173,13 +175,12 @@ def main(args: argparse.Namespace):
             if cont.upper() == "N" or cont == "":
                 return 1
 
-
     try:
         if k_file.is_same_file():
             if args.verbose:
                 print(f"Looks like the latest version is already installed")
             return 1
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         pass
 
     except Exception as e:
